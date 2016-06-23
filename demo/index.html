@@ -24,15 +24,48 @@
     </style>
   </head>
   <body>
-
     <div class="vertical-section-container centered">
-      <h3>Basic bloombox-enroll Demo</h3>
+      <h3>Enrollment (loading)</h3>
       <demo-snippet class="centered-demo">
         <template>
-          <bloombox-enroll></bloombox-enroll>
+          <bloombox-enroll
+            invite="sample123"
+            firstname="John"
+            lastname="Doe"
+            email="john.doe@domain.com"
+            domain="domain.com"
+            code="code123"
+            hash="hash123"
+            token="token123"
+            photo="https://lh5.googleusercontent.com/-hdqCivz5y4I/AAAAAAAAAAI/AAAAAAAAAZ8/orvrIMNGHmU/photo.jpg"></bloombox-enroll>
         </template>
       </demo-snippet>
     </div>
 
+    <div class="vertical-section-container centered">
+      <h3>Enrollment (ready)</h3>
+      <demo-snippet class="centered-demo ready-demo">
+        <template>
+          <bloombox-enroll
+            invite="sample123"
+            firstname="John"
+            lastname="Doe"
+            email="john.doe@domain.com"
+            domain="domain.com"
+            code="code123"
+            hash="hash123"
+            token="token123"
+            photo="https://lh5.googleusercontent.com/-hdqCivz5y4I/AAAAAAAAAAI/AAAAAAAAAZ8/orvrIMNGHmU/photo.jpg"></bloombox-enroll>
+        </template>
+      </demo-snippet>
+    </div>
+
+    <script>
+      window.addEventListener("WebComponentsReady", function() {
+        var enrollmentWidget = document.querySelector("demo-snippet.ready-demo bloombox-enroll");
+        console.info("Components ready. Notifying enrollment widget.");
+        enrollmentWidget.notifyReady();
+      });
+    </script>
   </body>
 </html>
