@@ -12,13 +12,22 @@
     <link rel="import" href="../bloombox-enroll.html">
 
     <style is="custom-style" include="demo-pages-shared-styles">
+      .vertical-section-container.centered {
+        max-width: 800px !important;
+      }
+
+      .centered-demo {
+        --demo-snippet-demo: {
+          background-color: #4c9d2f;
+        };
+      }
     </style>
   </head>
   <body>
 
     <div class="vertical-section-container centered">
       <h3>Basic bloombox-enroll Demo</h3>
-      <demo-snippet>
+      <demo-snippet class="centered-demo">
         <template>
           <bloombox-enroll></bloombox-enroll>
         </template>
