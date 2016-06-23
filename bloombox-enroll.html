@@ -158,7 +158,9 @@
 
       properties: {
         /**
-         *
+         * State flag that is flipped to `true` when the widget has completed loading and
+         * is in successful contact with the Bloombox Platform APIs required to activate
+         * and provision an account.
          */
         _active: {
           type: Boolean,
@@ -169,7 +171,9 @@
         },
 
         /**
-         *
+         * State flag that is flipped to `true` when the widget is communicating with the
+         * API, performing background work, or in general must lock the interface. Inputs
+         * are disabled based on the truthiness of this property.
          */
         _working: {
           type: Boolean,
@@ -180,7 +184,9 @@
         },
 
         /**
-         *
+         * State flag that is flipped to `true` when enrollment and activation has been
+         * fully completed. Hides the loading spinner and converts it to a green check
+         * icon indicating success.
          */
         _complete: {
           type: Boolean,
@@ -191,7 +197,9 @@
         },
 
         /**
-         *
+         * State flag that is flipped to `true` when the user has provided all required
+         * information and accepted the legal requirements. Enables submission of the
+         * account activation and provisioning request.
          */
         _submittable: {
           type: Boolean,
@@ -201,7 +209,8 @@
         },
 
         /**
-         *
+         * Boolean value indicating acceptance of the legal terms and conditions for use
+         * of this product. Required to continue with account activation/provisioning.
          */
         legal: {
           type: Boolean,
@@ -211,7 +220,8 @@
         },
 
         /**
-         *
+         * Email address provided by the user for account provisioning and enrollment.
+         * This value is usually injected by the server from a user's account invite.
          */
         email: {
           type: String,
@@ -220,7 +230,9 @@
         },
 
         /**
-         *
+         * Mobile phone number provided by the user for account provisioning and
+         * enrollment. This value is always provided directly by the user and is
+         * entirely optional.
          */
         mobile: {
           type: String,
@@ -229,7 +241,9 @@
         },
 
         /**
-         *
+         * The user's given name, provided by them, during enrollment. Sometimes the
+         * server injects this value as well, if it was provided when the subject
+         * enrollee's account invitation was provisioned.
          */
         firstname: {
           type: String,
@@ -238,7 +252,9 @@
         },
 
         /**
-         *
+         * The user's family name, provided by them, during enrollment. Sometimes
+         * the server injects this value, if it was provided when the subject enrollee's
+         * account invitation was provisioned.
          */
         lastname: {
           type: String,
@@ -247,7 +263,9 @@
         },
 
         /**
-         *
+         * The organization domain owning this user, if applicable. This applies with
+         * OAuth-based authentication via Google or Microsoft, where the subject
+         * enrollee has an organization domain account.
          */
         domain: {
           type: String,
@@ -255,7 +273,8 @@
         },
 
         /**
-         *
+         * Datastore key for the user's invitation. Injected by the server and provided
+         * by a parameter in the link clicked by the user to activate their account.
          */
         invite: {
           type: String,
@@ -264,7 +283,8 @@
         },
 
         /**
-         *
+         * String invitation code, provided by the server via the link clicked by the
+         * user to activate their account.
          */
         code: {
           type: String,
@@ -273,7 +293,8 @@
         },
 
         /**
-         *
+         * String invitation hash, used to double-verify this invitation ticket against
+         * underlying storage.
          */
         hash: {
           type: String,
@@ -282,7 +303,7 @@
         },
 
         /**
-         *
+         * One-time token provided by the server and required for account activation.
          */
         token: {
           type: String,
@@ -291,7 +312,8 @@
         },
 
         /**
-         *
+         * URL referencing the user's profile image. This is provided by the server after
+         * OAuth-based authentication.
          */
         photo: {
           type: String,
@@ -300,20 +322,25 @@
         },
 
         /**
-         *
+         * Computed property that provides a materialized payload for final enrollment.
+         * User provided properties are merged with server-injected values to produce a
+         * final request payload.
          */
         payload: {
           type: Object,
+          readOnly: true,
           computed: '_computePayload(email, mobile, firstname, lastname, invite, code, hash, token, photo)'
         }
       },
 
       /**
-       *
+       * UI responder function that reacts to the user indicating their acceptance to
+       * required legal terms and conditions.
        */
       _onLegalAccept: function(legal) {
+        var debug = this["__debug"] || window["__debug"] || false;
         if (legal === true) {
-          console.log("User accepted TOS and privacy policy.");
+          if (debug) console.info("User accepted TOS and privacy policy.");
           this.set("_submittable", true);
         } else {
           this.set("_submittable", false);
@@ -321,7 +348,8 @@
       },
 
       /**
-       *
+       * UI responder function that reacts to changes in the enrollment widget's working
+       * state, such as API calls or background tasks.
        */
       _onWorking: function(working) {
         if (this.get("legal") === true) {
@@ -330,7 +358,8 @@
       },
 
       /**
-       *
+       * Helper function that provides a URL endpoint for enrollment. Defaults to
+       * `localhost:8080` when an endpoint configuration cannot be found.
        */
       _getEnrollmentEndpoint: function() {
         if (bloom !== undefined && bloom !== null)
@@ -339,7 +368,8 @@
       },
 
       /**
-       *
+       * Compute function for the `payload` property. Collects user-provided values and
+       * server-injected values into a materialized payload for enrollment.
        */
       _computePayload: function(email, mobile, firstname, lastname, invite, code, hash, token, photo) {
         return {
@@ -362,16 +392,9 @@
       },
 
       /**
-       *
-       */
-      _shouldEnableSubmit: function() {
-        var legal = this.get("legal") || false,
-            active = this.get("_active");
-        return (legal && active);
-      },
-
-      /**
-       *
+       * Callback function that handles error and success responses from the enrollment
+       * API. Dispatches page redirect in the case of enrollment success, or displays an
+       * error alert dialog.
        */
       _handleEnrollmentResponse: function(response) {
         if (response.code !== undefined && response.error !== undefined) {
@@ -384,22 +407,27 @@
       },
 
       /**
-       *
+       * Callback function that handles successful enrollment completion. Forwards the
+       * user to the dashboard after a short delay.
        */
       _handleEnrollmentCompletion: function() {
-        console.log("Enrollment complete.");
+        var debug = this["__debug"] || window["__debug"] || false;
+        if (debug) console.info("Enrollment complete.");
         this.$.successDialog.open();
         setTimeout((function() {
-          window.location.href = window.location.origin + "/dashboard#!/home";
+          window.location.href = window.location.origin + "/dashboard";
         }), 3000);
       },
 
       /**
-       *
+       * External notification function that is executed by the dashboard auth context
+       * to indicate that underlying enrollment APIs are ready for use.
        */
       notifyReady: function() {
-        var that = this;
-        console.log("API is ready. Showing enrollment dialog...");
+        var that = this,
+            debug = this["__debug"] || window["__debug"] || false;
+        if (debug)
+          console.info("API is ready. Showing enrollment dialog...");
         setTimeout(function() {
           that._set_working(false);
           that._set_active(true);
@@ -407,7 +435,8 @@
       },
 
       /**
-       *
+       * Enrollment submission function, called to materialize the enrollment payload
+       * and send via the API to provision and activate the subject account.
        */
       submitEnrollment: function() {
         var that = this;
