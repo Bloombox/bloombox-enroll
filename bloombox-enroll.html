@@ -1,27 +1,446 @@
+
+<!--
+`<bloombox-enroll>` provides UI for enrolling new user accounts and accepting account invites.
+
+@group Bloombox Elements
+@element bloombox-enroll
+@demo demo/index.html
+@homepage bloombox.github.io
+-->
+
 <link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../iron-icon/iron-icon.html">
+<link rel="import" href="../iron-icons/iron-icons.html">
+<link rel="import" href="../paper-toast/paper-toast.html">
+<link rel="import" href="../paper-input/paper-input.html">
+<link rel="import" href="../paper-button/paper-button.html">
+<link rel="import" href="../paper-spinner/paper-spinner-lite.html">
+<link rel="import" href="../paper-checkbox/paper-checkbox.html">
+<link rel="import" href="../gold-email-input/gold-email-input.html">
+<link rel="import" href="../gold-phone-input/gold-phone-input.html">
+
 
 <dom-module id="bloombox-enroll">
   <template>
-    <style>
+    <style is="custom-style" include="bloombox-styles">
       :host {
         display: block;
+        background: linear-gradient(to bottom, #EEE, #DDD);
+        margin: 5% auto;
+        min-height: 400px;
+        max-width: 400px;
+        border-radius: 10px;
+        font-family: 'Lato', sans-serif;
+        padding: 10px 40px;
+        position: relative;
+      }
+
+      :host fieldset {
+        border: none;
+        margin: 20px 0;
+        -webkit-padding-start: 0;
+        -webkit-padding-before: 0;
+        -webkit-padding-after: 0;
+        -webkit-padding-end: 0;
+      }
+
+      :host fieldset.contact {
+        clear: both;
+      }
+
+      :host fieldset.legal {
+        text-align: right;
+      }
+
+      :host fieldset paper-input, :host fieldset gold-email-input, :host fieldset gold-phone-input {
+        display: inline-block;
+      }
+
+      :host fieldset .left, :host fieldset .right {
+        width: 48%;
+      }
+
+      :host .left {
+        float: left;
+      }
+
+      :host .right {
+        float: right;
+      }
+
+      :host div.activation-form div.activation-loading {
+        bottom: 0;
+        top: 0;
+        left: 0;
+        right: 0;
+        text-align: center;
+      }
+
+      :host div.activation-form div.activation-loading,
+      :host div.activation-form div.activation-loading iron-icon {
+        color: #68b345;
+      }
+
+      :host div.activation-form div.activation-loading paper-spinner-lite {
+        --paper-spinner-color: #68b345;
+        position: absolute;
+        bottom: 35px;
+        margin-left: 50px;
+      }
+
+      :host div.enrollment-submit {
+        text-align: right;
+        width: 100%;
+        bottom: 30px;
+        right: 30px;
+        position: absolute;
+      }
+
+      :host paper-toast.error {
+        --paper-toast-background-color: red;
+        --paper-toast-color: white;
+      }
+
+      :host paper-toast.success {
+        --paper-toast-background-color: green;
+        --paper-toast-color: white;
       }
     </style>
-    <h2>Hello [[prop1]]</h2>
+
+    <h1>Account Activation</h1>
+
+    <div class="activation-form">
+      <template is="dom-if" if="[[_active]]">
+        <fieldset class="name">
+          <paper-input label="First Name" class="left" disabled$="[[_working]]" value="{{firstname}}" required></paper-input>
+          <paper-input label="Last Name" class="right" disabled$="[[_working]]" value="{{lastname}}" required></paper-input>
+        </fieldset><!-- end fieldset.name -->
+
+        <fieldset class="contact">
+          <gold-email-input class="left" label="Email" required disabled auto-validate value="[[email]]"></gold-email-input>
+          <gold-phone-input class="right" label="Cell phone" country-code="1" disabled$="[[_working]]" auto-validate value="{{mobile}}"></gold-phone-input>
+        </fieldset><!-- end fieldset.contact -->
+
+        <fieldset class="legal">
+          <paper-checkbox disabled$="[[legal]]" checked="{{legal}}">I agree to the <a href="/legal/tos" alt="Terms of Service">Terms of Service</a> and <a href="/legal/privacy" alt="Privacy Policy">Privacy Policy</a></paper-checkbox>
+        </fieldset><!-- end fieldset.legal -->
+      </template>
+      <template is="dom-if" if="[[_working]]">
+        <div class="activation-loading">
+          <iron-icon hidden$="[[!_complete]]" icon="check"></iron-icon>
+          <paper-spinner-lite hidden$="[[_complete]]" active></paper-spinner-lite>
+        </div><!-- end div.activation-loading -->
+      </template>
+    </div><!-- end div.activation-form -->
+
+    <div class="enrollment-submit">
+      <paper-button id="submit" raised disabled$="[[!_submittable]]">Continue</paper-button>
+    </div><!-- end div.enrollment-submit -->
+
+    <div class="enrollment-notifications">
+      <paper-toast id="errorDialog" class="error" text="Woops! An error occurred. Please try again later."></paper-toast>
+      <paper-toast id="successDialog" class="success" text="Success! Your account is active. Redirecting to dashboard..."></paper-toast>
+    </div>
   </template>
 
   <script>
-    Polymer({
-
+    Polymer.BloomboxEnroll = Polymer({
       is: 'bloombox-enroll',
 
-      properties: {
-        prop1: {
-          type: String,
-          value: 'bloombox-enroll',
-        },
+      observers: [
+        "_onLegalAccept(legal)",
+        "_onWorking(_working)"
+      ],
+
+      listeners: {
+        "submit.tap": "submitEnrollment"
       },
 
+      properties: {
+        /**
+         *
+         */
+        _active: {
+          type: Boolean,
+          notify: true,
+          reflectToAttribute: false,
+          value: false,
+          readOnly: true
+        },
+
+        /**
+         *
+         */
+        _working: {
+          type: Boolean,
+          notify: true,
+          reflectToAttribute: false,
+          value: true,
+          readOnly: true
+        },
+
+        /**
+         *
+         */
+        _complete: {
+          type: Boolean,
+          notify: true,
+          reflectToAttribute: false,
+          value: false,
+          readOnly: true
+        },
+
+        /**
+         *
+         */
+        _submittable: {
+          type: Boolean,
+          notify: true,
+          reflectToAttribute: false,
+          value: false
+        },
+
+        /**
+         *
+         */
+        legal: {
+          type: Boolean,
+          notify: true,
+          reflectToAttribute: true,
+          value: false
+        },
+
+        /**
+         *
+         */
+        email: {
+          type: String,
+          notify: true,
+          reflectToAttribute: true
+        },
+
+        /**
+         *
+         */
+        mobile: {
+          type: String,
+          notify: true,
+          reflectToAttribute: true
+        },
+
+        /**
+         *
+         */
+        firstname: {
+          type: String,
+          notify: true,
+          reflectToAttribute: true
+        },
+
+        /**
+         *
+         */
+        lastname: {
+          type: String,
+          notify: true,
+          reflectToAttribute: true
+        },
+
+        /**
+         *
+         */
+        domain: {
+          type: String,
+          notify: true
+        },
+
+        /**
+         *
+         */
+        invite: {
+          type: String,
+          notify: true,
+          reflectToAttribute: true
+        },
+
+        /**
+         *
+         */
+        code: {
+          type: String,
+          notify: true,
+          reflectToAttribute: true
+        },
+
+        /**
+         *
+         */
+        hash: {
+          type: String,
+          notify: true,
+          reflectToAttribute: true
+        },
+
+        /**
+         *
+         */
+        token: {
+          type: String,
+          notify: true,
+          reflectToAttribute: true
+        },
+
+        /**
+         *
+         */
+        photo: {
+          type: String,
+          notify: true,
+          reflectToAttribute: true
+        },
+
+        /**
+         *
+         */
+        payload: {
+          type: Object,
+          computed: '_computePayload(email, mobile, firstname, lastname, invite, code, hash, token, photo)'
+        }
+      },
+
+      /**
+       *
+       */
+      _onLegalAccept: function(legal) {
+        if (legal === true) {
+          console.log("User accepted TOS and privacy policy.");
+          this.set("_submittable", true);
+        } else {
+          this.set("_submittable", false);
+        }
+      },
+
+      /**
+       *
+       */
+      _onWorking: function(working) {
+        if (this.get("legal") === true) {
+          this.set("_submittable", !working);
+        }
+      },
+
+      /**
+       *
+       */
+      _getEnrollmentEndpoint: function() {
+        if (bloom !== undefined && bloom !== null)
+          return bloom.config.api.endpoint;
+        return "http://localhost:8080/_ah/api";
+      },
+
+      /**
+       *
+       */
+      _computePayload: function(email, mobile, firstname, lastname, invite, code, hash, token, photo) {
+        return {
+          key: invite,
+          ticket: {
+            code: code,
+            hash: hash,
+            token: token
+          },
+          name: {
+            first: firstname,
+            last: lastname
+          },
+          user: {
+            email: email,
+            mobile: mobile,
+            photo: photo
+          }
+        };
+      },
+
+      /**
+       *
+       */
+      _shouldEnableSubmit: function() {
+        var legal = this.get("legal") || false,
+            active = this.get("_active");
+        return (legal && active);
+      },
+
+      /**
+       *
+       */
+      _handleEnrollmentResponse: function(response) {
+        if (response.code !== undefined && response.error !== undefined) {
+          // error state
+          console.warn("Received error (code " + response.code + ") response from server: ", response.error);
+          alert("An error occurred with your enrollment. Please try again later.");
+        } else {
+          this._handleEnrollmentCompletion();
+        }
+      },
+
+      /**
+       *
+       */
+      _handleEnrollmentCompletion: function() {
+        console.log("Enrollment complete.");
+        this.$.successDialog.open();
+        setTimeout((function() {
+          window.location.href = window.location.origin + "/dashboard#!/home";
+        }), 3000);
+      },
+
+      /**
+       *
+       */
+      notifyReady: function() {
+        var that = this;
+        console.log("API is ready. Showing enrollment dialog...");
+        setTimeout(function() {
+          that._set_working(false);
+          that._set_active(true);
+        }, 1000);
+      },
+
+      /**
+       *
+       */
+      submitEnrollment: function() {
+        var that = this;
+
+        this.debounce("submit", function() {
+          var form = that.get("payload"),
+              payload = {},
+              request;
+
+          that._set_working(true);
+
+          payload["code"] = form.ticket.code;
+          payload["hash"] = form.ticket.hash;
+          payload["token"] = form.ticket.token;
+          payload["email"] = form.user.email;
+          if (form.user.mobile !== undefined && form.user.mobile !== null && form.user.mobile.length > 1)
+            payload["mobile"] = form.user.mobile;
+
+          if (form.user.photo !== undefined && form.user.photo !== null && form.user.photo.length > 1)
+            payload["photo"] = form.user.photo;
+          payload["name"] = {
+            first: form.name.first,
+            last: form.name.last
+          };
+
+          request = gapi.client.enrollment.enroll({ticket: form.key}, payload);
+
+          request.execute((
+           function(response) {
+              that._handleEnrollmentResponse(response);
+           }));
+        }, 300);
+      }
     });
   </script>
 </dom-module>
