@@ -160,6 +160,17 @@
 
       properties: {
         /**
+         * State flag indicating debug mode being active or not.
+         */
+        _debug: {
+          type: Boolean,
+          notify: true,
+          value: function() {
+            return window["__debug"] || false;
+          }
+        },
+
+        /**
          * State flag that is flipped to `true` when the widget has completed loading and
          * is in successful contact with the Bloombox Platform APIs required to activate
          * and provision an account.
