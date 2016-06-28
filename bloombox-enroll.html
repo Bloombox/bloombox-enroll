@@ -9,6 +9,7 @@
 -->
 
 <link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../iron-ajax/iron-ajax.html">
 <link rel="import" href="../iron-icon/iron-icon.html">
 <link rel="import" href="../iron-icons/iron-icons.html">
 <link rel="import" href="../paper-toast/paper-toast.html">
@@ -108,6 +109,17 @@
         --paper-toast-color: white;
       }
     </style>
+
+    <!-- JavaScript Context -->
+    <iron-ajax
+      id="enrollmentContext"
+      url="/api/context.json?mode=enrollment"
+      verbose$="[[debug]]"
+      auto
+      json-prefix="^.^"
+      with-credentials
+      on-response="_handleEnrollmentContext"
+      content-type="application/json"></iron-ajax>
 
     <h1>Account Activation</h1>
 
@@ -388,6 +400,18 @@
             photo: photo
           }
         };
+      },
+
+      /**
+       * Build and set context from server-provided values.
+       */
+      _handleEnrollmentContext: function(context) {
+        var debug = window["__debug"] || false,
+            bloom = window["bloom"];
+        if (debug) {
+          console.info("Loaded context from server:", context);
+        }
+        bloom.context(context);
       },
 
       /**
