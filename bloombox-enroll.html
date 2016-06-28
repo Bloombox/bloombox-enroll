@@ -118,7 +118,7 @@
       auto
       json-prefix="^.^"
       with-credentials
-      on-response="_handleEnrollmentContext"
+      last-response="{{_context}}"
       content-type="application/json"></iron-ajax>
 
     <h1>Account Activation</h1>
@@ -192,6 +192,16 @@
           notify: true,
           value: false,
           readOnly: true
+        },
+
+        /**
+         * Server-provided context, gathered via `iron-ajax` widget from the Bloombox
+         * Platform.
+         */
+        _context: {
+          type: Object,
+          notify: true,
+          observer: '_enrollmentContextLoaded'
         },
 
         /**
@@ -405,7 +415,7 @@
       /**
        * Build and set context from server-provided values.
        */
-      _handleEnrollmentContext: function(context) {
+      _enrollmentContextLoaded: function(context) {
         var debug = window["__debug"] || false,
             bloom = window["bloom"];
         if (debug) {
