@@ -335,6 +335,15 @@
         },
 
         /**
+         * Partner key passed in from account ticket validation. Optional because it is
+         * left empty for admins, who have access to all partners.
+         */
+        partner: {
+          type: String,
+          notify: true
+        },
+
+        /**
          * URL referencing the user's profile image. This is provided by the server after
          * OAuth-based authentication.
          */
@@ -394,8 +403,10 @@
        * server-injected values into a materialized payload for enrollment.
        */
       _computePayload: function(email, mobile, firstname, lastname, invite, code, hash, token, photo) {
+        var partner = this.partner;
         return {
           key: invite,
+          partner: partner,
           ticket: {
             code: code,
             hash: hash,
@@ -485,6 +496,7 @@
           payload["code"] = form.ticket.code;
           payload["hash"] = form.ticket.hash;
           payload["token"] = form.ticket.token;
+          payload["partner"] = form.partner;
           payload["email"] = form.user.email;
           if (form.user.mobile !== undefined && form.user.mobile !== null && form.user.mobile.length > 1)
             payload["mobile"] = form.user.mobile;
