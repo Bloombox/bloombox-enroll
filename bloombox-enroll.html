@@ -528,7 +528,7 @@
           if (form.partner != null && form.partner != undefined && typeof form.partner === "string" && form.partner.length > 1) {
             // we are initializing a regular user - not an admin
             payload["partner"] = form.partner;
-            gtoken = _parseGtoken();
+            gtoken = this._parseGtoken();
             request = bloom.prepare(gapi.client.enrollment.enroll({ticket: form.key, gtoken: gtoken}));
           } else {
             // we are initializing an admin
