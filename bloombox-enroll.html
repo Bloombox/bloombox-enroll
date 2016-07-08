@@ -529,7 +529,7 @@
             // we are initializing a regular user - not an admin
             payload["partner"] = form.partner;
             gtoken = this._parseGtoken();
-            request = bloom.prepare(gapi.client.enrollment.enroll({ticket: form.key, gtoken: gtoken}));
+            request = bloom.prepare(gapi.client.enrollment.enroll({ticket: form.key, gtoken: gtoken}, payload));
           } else {
             // we are initializing an admin
             request = bloom.prepare(gapi.client.enrollment.enroll({ticket: form.key}, payload));
