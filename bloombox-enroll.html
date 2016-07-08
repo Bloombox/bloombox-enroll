@@ -365,6 +365,22 @@
       },
 
       /**
+       * Parse local `gtoken` cookie and return the ID token value, if available.
+       * If the token could not be found or parsed, returns `null`.
+       */
+      _parseGtoken: function() {
+        var items = document.cookie.split(" "),
+            i, d;
+        for (i in items) {
+          d = items[i].split("=");
+          if (d[0] === "gtoken" && d.length > 1) {
+            return d[1];  // found it
+          }
+        }
+        return null;
+      },
+
+      /**
        * UI responder function that reacts to the user indicating their acceptance to
        * required legal terms and conditions.
        */
@@ -489,7 +505,8 @@
         this.debounce("submit", function() {
           var form = that.get("payload"),
               payload = {},
-              request;
+              request,
+              gtoken;
 
           that._set_working(true);
 
@@ -508,7 +525,15 @@
             last: form.name.last
           };
 
-          request = gapi.client.enrollment.enroll({ticket: form.key}, payload);
+          if (form.partner != null && form.partner != undefined && typeof form.partner === "string" && form.partner.length > 1) {
+            // we are initializing a regular user - not an admin
+            payload["partner"] = form.partner;
+            gtoken = _parseGtoken();
+            request = bloom.prepare(gapi.client.enrollment.enroll({ticket: form.key, gtoken: gtoken}));
+          } else {
+            // we are initializing an admin
+            request = bloom.prepare(gapi.client.enrollment.enroll({ticket: form.key}, payload));
+          }
 
           request.execute((
            function(response) {
