@@ -307,32 +307,6 @@
         },
 
         /**
-         * String invitation code, provided by the server via the link clicked by the
-         * user to activate their account.
-         */
-        code: {
-          type: String,
-          notify: true
-        },
-
-        /**
-         * String invitation hash, used to double-verify this invitation ticket against
-         * underlying storage.
-         */
-        hash: {
-          type: String,
-          notify: true
-        },
-
-        /**
-         * One-time token provided by the server and required for account activation.
-         */
-        token: {
-          type: String,
-          notify: true
-        },
-
-        /**
          * Partner key passed in from account ticket validation. Optional because it is
          * left empty for admins, who have access to all partners.
          */
@@ -358,7 +332,7 @@
         payload: {
           type: Object,
           readOnly: true,
-          computed: '_computePayload(email, mobile, firstname, lastname, invite, code, hash, token, photo)'
+          computed: "_computePayload(email, mobile, firstname, lastname, invite, photo)"
         }
       },
 
@@ -401,7 +375,7 @@
       _onLegalAccept: function(legal) {
         var debug = this["__debug"] || window["__debug"] || false;
         if (legal === true) {
-          if (debug) console.info("User accepted TOS and privacy policy.");
+          if (debug) console.info("[Auth]: User accepted TOS and privacy policy.");
           this.set("_submittable", true);
         } else {
           this.set("_submittable", false);
@@ -534,7 +508,7 @@
         var that = this,
             debug = this["__debug"] || window["__debug"] || false;
         if (debug)
-          console.info("API is ready. Showing enrollment dialog...");
+          console.info("[Auth]: API is ready. Showing enrollment dialog...");
         setTimeout(function() {
           that._set_working(false);
           that._set_active(true);
