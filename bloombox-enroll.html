@@ -363,6 +363,22 @@
       },
 
       /**
+       * Find/load a user session.
+       *
+       * @returns {?Object} User session, or `null`, if one could not be located.
+       */
+      _loadSession: function() {
+        var loadSessionFn = window["loadSession"] || null,
+            /** @type {?Ticket} **/ session;
+        if (loadSessionFn === null) {
+          console.warn("[Auth]: Unable to load user session.");
+        } else {
+          return window["loadSession"]();
+        }
+        return null;
+      },
+
+      /**
        * Parse local `gtoken` cookie and return the ID token value, if available.
        * If the token could not be found or parsed, returns `null`.
        */
