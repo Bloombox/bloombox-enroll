@@ -29,7 +29,7 @@
       :host {
         display: block;
         background: linear-gradient(to bottom, #EEE, #DDD);
-        margin: 5% auto;
+        margin: 10% auto;
         min-height: 400px;
         max-width: 400px;
         border-radius: 10px;
@@ -120,9 +120,7 @@
       json-prefix="^.^"
       with-credentials
       last-response="{{_context}}"
-      content-type="application/json"></iron-ajax>
-
-    <h1>Account Activation</h1>
+      content-type="application/json"></iron-ajax
 
     <div class="activation-form">
       <template is="dom-if" if="[[_active]]">
