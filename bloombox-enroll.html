@@ -26,6 +26,11 @@
 <dom-module id="bloombox-enroll">
   <template>
     <style is="custom-style" include="bloombox-styles">
+      :root {
+        --paper-spinner-color: #68b345;
+        --paper-spinner-lite-color: #68b345;
+      }
+
       :host {
         display: block;
         background: linear-gradient(to bottom, #EEE, #DDD);
@@ -36,6 +41,13 @@
         font-family: 'Lato', sans-serif;
         padding: 10px 40px;
         position: relative;
+        --paper-spinner-color: #68b345;
+        --paper-spinner-lite-color: #68b345;
+      }
+
+      :host h1 {
+        font-weight: normal;
+        margin-bottom: 35px;
       }
 
       :host fieldset {
@@ -79,6 +91,12 @@
         text-align: center;
       }
 
+      :host div.activation-loading {
+        position: absolute;
+        bottom: 35px;
+        left: 35px;
+      }
+
       :host div.activation-form div.activation-loading,
       :host div.activation-form div.activation-loading iron-icon {
         color: #68b345;
@@ -120,7 +138,9 @@
       json-prefix="^.^"
       with-credentials
       last-response="{{_context}}"
-      content-type="application/json"></iron-ajax
+      content-type="application/json"></iron-ajax>
+
+    <h1>Account Info</h1>
 
     <div class="activation-form">
       <template is="dom-if" if="[[_active]]">
