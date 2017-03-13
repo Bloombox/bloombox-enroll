@@ -443,11 +443,43 @@
        */
       _enrollmentContextLoaded: function(context) {
         var debug = window["__debug"] || false,
-            bloom = window["bloom"];
+            bloom = window["bloombox"],
+            invite = window["invite"],
+            session = this._loadSession(),
+            that = this;
         if (debug) {
-          console.info("Loaded context from server:", context);
+          console.info("[Auth]: Loaded context:", context);
         }
-        bloom.context(context);
+        if (bloom) {
+          bloom["config"] = context;
+
+          // resolve the user's account invite
+          invite(function(ticket) {
+            // we found their ticket
+            console.info("[Auth]: Resolved enrollment ticket for user.", {ticket: ticket});
+            that.set("invite", ticket["key"]);
+            if (session["auth"] && session["auth"]["user"]) {
+              if (session["auth"]["user"]["email"])
+                that.set("email", session["auth"]["user"]["email"]);
+              if (session["auth"]["user"]["name"]) {
+                if (session["auth"]["user"]["name"]["first"])
+                  that.set("firstname", session["auth"]["user"]["name"]["first"]);
+                if (session["auth"]["user"]["name"]["last"])
+                  that.set("lastname", session["auth"]["user"]["name"]["last"]);
+              }
+            }
+            that.notifyReady();
+
+          }, function(reason) {
+            // we failed to resolve their ticket
+            console.error("[Auth]: Failed to load invite via RPC. Reason given: '" + reason + "'.");
+            that.$.errorDialog.open();
+
+          });
+        } else {
+          console.error("[Auth]: Failed to load context callback.");
+          this.$.errorDialog.open();
+        }
       },
 
       /**
@@ -494,49 +526,36 @@
       },
 
       /**
-       * Enrollment submission function, called to materialize the enrollment payload
-       * and send via the API to provision and activate the subject account.
+       * Enrollment submission method, called to materialize the enrollment payload
+       * and send via RPC to provision and activate the subject account.
        */
       submitEnrollment: function() {
-        var that = this;
+        var that = this,
+            engine = this.engine,
+            inviteKey = this.get("invite");
 
         this.debounce("submit", function() {
           var form = that.get("payload"),
-              payload = {},
-              request,
-              gtoken;
+              enroll = window["enroll"],
+              session = this._loadSession();
+
+          console.info("[Auth]: Submitting enrollment.", {form: form, session: session});
 
           that._set_working(true);
 
-          payload["code"] = form.ticket.code;
-          payload["hash"] = form.ticket.hash;
-          payload["token"] = form.ticket.token;
-          payload["partner"] = form.partner;
-          payload["email"] = form.user.email;
-          if (form.user.mobile !== undefined && form.user.mobile !== null && form.user.mobile.length > 1)
-            payload["mobile"] = form.user.mobile;
-
-          if (form.user.photo !== undefined && form.user.photo !== null && form.user.photo.length > 1)
-            payload["photo"] = form.user.photo;
-          payload["name"] = {
-            first: form.name.first,
-            last: form.name.last
-          };
-
-          if (form.partner != null && form.partner != undefined && typeof form.partner === "string" && form.partner.length > 1) {
-            // we are initializing a regular user - not an admin
-            payload["partner"] = form.partner;
-            gtoken = this._parseGtoken();
-            request = bloom.prepare(gapi.client.enrollment.enroll({ticket: form.key, gtoken: gtoken}, payload));
-          } else {
-            // we are initializing an admin
-            request = bloom.prepare(gapi.client.enrollment.enroll({ticket: form.key}, payload));
-          }
-
-          request.execute((
-           function(response) {
-              that._handleEnrollmentResponse(response);
-           }));
+          enroll({
+            "ticket": inviteKey,
+            "token": session["auth"]["auth"]["jwt"],
+            "session": session["session"]["session"],
+            "refresh": session["auth"]["auth"]["refresh"],
+            "provider": session["auth"]["auth"]["credential"]["provider"],
+            "timestamp": session["auth"]["ts"]}, form["user"], function(response) {
+            // enrollment succeeded
+            that._handleEnrollmentResponse(response);
+          }, function(reason) {
+            console.error("[Auth]: Failed to enroll. Reason provided: '" + reason + "'.");
+            that.$.errorDialog.open();
+          });
         }, 300);
       }
     });
