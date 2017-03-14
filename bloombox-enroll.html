@@ -427,16 +427,11 @@
        * Compute function for the `payload` property. Collects user-provided values and
        * server-injected values into a materialized payload for enrollment.
        */
-      _computePayload: function(email, mobile, firstname, lastname, invite, code, hash, token, photo) {
+      _computePayload: function(email, mobile, firstname, lastname, invite, photo) {
         var partner = this.partner;
         return {
           key: invite,
           partner: partner,
-          ticket: {
-            code: code,
-            hash: hash,
-            token: token
-          },
           name: {
             first: firstname,
             last: lastname
