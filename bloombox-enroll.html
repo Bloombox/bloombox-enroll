@@ -430,16 +430,16 @@
       _computePayload: function(email, mobile, firstname, lastname, invite, photo) {
         var partner = this.partner;
         return {
-          key: invite,
-          partner: partner,
-          name: {
-            first: firstname,
-            last: lastname
-          },
-          user: {
-            email: email,
-            mobile: mobile,
-            photo: photo
+          "key": invite,
+          "partner": partner,
+          "user": {
+            "email": email,
+            "mobile": mobile,
+            "photo": photo,
+            "name": {
+              "first": firstname,
+              "last": lastname
+            }
           }
         };
       },
